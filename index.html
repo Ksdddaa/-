@@ -1,0 +1,364 @@
+<!DOCTYPE html>  
+<html lang="zh-CN">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">  
+<meta name="apple-mobile-web-app-capable" content="yes">  
+<title>慢慢靠近你</title>  
+  
+<style>  
+html,body{  
+  margin:0;  
+  padding:0;  
+  height:100%;  
+  overflow:hidden;  
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;  
+  background:radial-gradient(circle at top,#1a1d3a,#0b0d1c);  
+  color:#fff;  
+}  
+*{box-sizing:border-box}  
+  
+canvas{  
+  position:fixed;  
+  inset:0;  
+  z-index:0;  
+}  
+  
+.stage{  
+  position:absolute;  
+  inset:0;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  padding:30px;  
+  z-index:2;  
+}  
+.panel{  
+  max-width:380px;  
+  text-align:center;  
+}  
+  
+.line{  
+  font-size:17px;  
+  line-height:2.2;  
+  opacity:0;  
+  transition:opacity 1.8s ease;  
+}  
+.line.show{opacity:1}  
+  
+.name{  
+  margin-top:26px;  
+  font-size:26px;  
+  color:#ffb7cc;  
+  letter-spacing:2px;  
+  opacity:0;  
+  transition:opacity 2s ease;  
+}  
+  
+button{  
+  margin-top:36px;  
+  padding:14px 36px;  
+  border-radius:40px;  
+  border:none;  
+  background:#ff7fa8;  
+  color:#fff;  
+  font-size:15px;  
+  box-shadow:0 0 40px rgba(255,127,168,.8);  
+}  
+button:active{transform:scale(.96)}  
+  
+.hint{  
+  position:absolute;  
+  bottom:28px;  
+  font-size:13px;  
+  opacity:.55;  
+}  
+</style>  
+</head>  
+  
+<body>  
+  
+<canvas id="bg"></canvas>  
+  
+<div class="stage">  
+  <div class="panel">  
+    <div class="line" id="text"></div>  
+    <div class="name" id="name">小姚</div>  
+    <button id="btn" style="display:none" onclick="next()">我想和你说句话</button>  
+  </div>  
+  <div class="hint">轻轻点一下</div>  
+</div>  
+  
+<audio id="bgm" loop>  
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_84c2bfa8a5.mp3">  
+</audio>  
+  
+<script>  
+/* =========================  
+   🔁 回看模式状态  
+========================= */  
+const HAS_VIEWED_KEY = "confession_viewed";  
+const isReturning = localStorage.getItem(HAS_VIEWED_KEY) === "yes";  
+  
+/* =========================  
+   星云背景  
+========================= */  
+const c=document.getElementById("bg");  
+const ctx=c.getContext("2d");  
+function resize(){c.width=innerWidth;c.height=innerHeight}  
+resize();addEventListener("resize",resize);  
+  
+let warm=false;  
+const fog=Array.from({length:260},()=>({  
+  x:Math.random()*c.width,  
+  y:Math.random()*c.height,  
+  r:Math.random()*2.4+0.6,  
+  v:Math.random()*0.12+0.04,  
+  o:Math.random()*0.6+0.3  
+}));  
+  
+function draw(){  
+  ctx.clearRect(0,0,c.width,c.height);  
+  fog.forEach(p=>{  
+    ctx.beginPath();  
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);  
+    ctx.fillStyle= warm  
+      ? `rgba(255,185,205,${p.o})`  
+      : `rgba(255,255,255,${p.o})`;  
+    ctx.fill();  
+    p.y+=p.v;  
+    if(p.y>c.height) p.y=0;  
+  });  
+  requestAnimationFrame(draw);  
+}  
+draw();  
+  
+/* =========================  
+   六幕章节  
+========================= */  
+const chapters = [  
+  
+[  
+  ...(isReturning ? [  
+    "你又看到这里了。",  
+    "<br><br>",  
+    "那我想，",  
+    "也许这些话，",  
+    "对你来说并不陌生。",  
+    "<br><br>",  
+    "所以这一次，",  
+    "我会说得慢一点。"  
+  ] : [  
+    "有些话，",  
+    "不太适合在聊天框里说。",  
+    "<br><br>",  
+    "不是因为不重要，",  
+    "恰恰相反，",  
+    "是因为太认真了。",  
+    "<br><br>",  
+    "认真到我会反复思考，",  
+    "要不要说出口。"  
+  ])  
+],  
+  
+[  
+"后来有一段时间，",  
+"我开始留意很多细节。",  
+"<br><br>",  
+"一些原本很普通的瞬间，",  
+"因为你在，",  
+"变得值得记住。",  
+"<br><br>",  
+"我会在事情发生之后，",  
+"下意识地想起你。",  
+"<br><br>",  
+"然后才意识到，",  
+"这种习惯，",  
+"已经存在了一段时间。"  
+],  
+  
+[  
+"这种变化并不吵闹。",  
+"<br><br>",  
+"它没有打乱我的生活，",  
+"却慢慢改变了我的重心。",  
+"<br><br>",  
+"我开始期待一些对话，",  
+"也开始在意你的情绪。",  
+"<br><br>",  
+"不是刻意的那种在意，",  
+"而是很自然地，",  
+"想靠近一点。"  
+],  
+  
+[  
+"我想过很多种表达方式。",  
+"<br><br>",  
+"最后还是选择了现在这样。",  
+"<br><br>",  
+"不急着定义，",  
+"也不急着索取。",  
+"<br><br>",  
+"只是把我的心意，",  
+"安静地放在你面前。"  
+],  
+  
+[  
+"直到有一天，",  
+"我意识到，",  
+"这并不是偶然。",  
+"<br><br>",  
+"不是因为时间刚好，",  
+"而是因为你。",  
+"<br><br>",  
+"你这个人，",  
+"本身就很重要。"  
+],  
+  
+[  
+"我不急着要一个结果。",  
+"<br><br>",  
+"只是想让你知道——",  
+"<br><br>",  
+"在我的世界里，",  
+"你有一个很温柔的位置。"  
+]  
+  
+];  
+  
+/* =========================  
+   主线播放  
+========================= */  
+let scene=0, idx=0;  
+const box=document.getElementById("text");  
+const name=document.getElementById("name");  
+const btn=document.getElementById("btn");  
+  
+function play(){  
+  box.classList.add("show");  
+  box.innerHTML+=chapters[scene][idx++];  
+  if(idx<chapters[scene].length){  
+    setTimeout(play, isReturning ? 1100 : 800);  
+  }else{  
+    if(scene<chapters.length-1){  
+      setTimeout(()=>{  
+        box.innerHTML="";  
+        idx=0;  
+        scene++;  
+        play();  
+      },1800);  
+    }else{  
+      setTimeout(()=>{  
+        name.style.opacity=1;  
+        btn.style.display="inline-block";  
+        localStorage.setItem(HAS_VIEWED_KEY,"yes");  
+      },2000);  
+    }  
+  }  
+}  
+  
+/* =========================  
+   启动  
+========================= */  
+let started=false;  
+document.body.addEventListener("click",()=>{  
+  if(!started){  
+    document.getElementById("bgm").play();  
+    play();  
+    started=true;  
+  }  
+});  
+  
+/* =========================  
+   最终按钮  
+========================= */  
+function next(){  
+  warm=true;  
+  box.innerHTML="";  
+  name.style.opacity=0;  
+  btn.style.display="none";  
+  
+  const end=[  
+    "你对我来说，",  
+    "是一种很安静的在意。",  
+    "<br><br>",  
+    "如果你愿意，",  
+    "跟我说一句话就好。",  
+    "<br>",  
+    "我会认真听。"  
+  ];  
+  let j=0;  
+  function endShow(){  
+    if(j<end.length){  
+      box.innerHTML+=end[j++];  
+      setTimeout(endShow,900);  
+    }  
+  }  
+  endShow();  
+}  
+  
+/* =========================  
+   🌙 深夜彩蛋  
+========================= */  
+(function(){  
+  const now=new Date();  
+  const hour=now.getHours();  
+  let shown=false;  
+  
+  const egg=document.createElement("div");  
+  egg.style.position="fixed";  
+  egg.style.bottom="18px";  
+  egg.style.left="50%";  
+  egg.style.transform="translateX(-50%)";  
+  egg.style.fontSize="13px";  
+  egg.style.opacity="0";  
+  egg.style.color="rgba(255,255,255,.55)";  
+  egg.style.transition="opacity 2s";  
+  egg.style.zIndex="5";  
+  egg.style.textAlign="center";  
+  egg.innerHTML="已经很晚了。<br>如果你还在看，希望你今天过得还不错。";  
+  
+  document.body.appendChild(egg);  
+  
+  function show(){  
+    if(shown) return;  
+    shown=true;  
+    egg.style.opacity="1";  
+  }  
+  
+  if(hour>=23||hour<5){  
+    setTimeout(show,3000);  
+  }else{  
+    setTimeout(show,40000);  
+  }  
+  
+  egg.addEventListener("click",()=>{  
+    egg.style.opacity="0";  
+    setTimeout(()=>{  
+      box.innerHTML="";  
+      const night=[  
+        "其实这些话，",  
+        "更适合在安静的夜晚看到。",  
+        "<br><br>",  
+        "如果现在你有一点点空闲，",  
+        "那就刚刚好。",  
+        "<br><br>",  
+        "晚安之前，",  
+        "如果你愿意，",  
+        "跟我说一句话吧。"  
+      ];  
+      let i=0;  
+      function showN(){  
+        if(i<night.length){  
+          box.innerHTML+=night[i++];  
+          setTimeout(showN,900);  
+        }  
+      }  
+      showN();  
+    },1200);  
+  });  
+})();  
+</script>  
+  
+</body>  
+</html>  
